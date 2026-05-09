@@ -3027,9 +3027,25 @@
     statusBar.innerHTML = msg;
   }
 
-  // 音声リスト読み込み待ち
+  // 音声リスト読み込み待ち（Chromeは非同期のためキャッシュする）
+  let convVoiceFemale = null;
+  let convVoiceMale = null;
+
+  function loadConvVoices() {
+    const voices = window.speechSynthesis.getVoices();
+    const enVoices = voices.filter(v => v.lang.startsWith('en'));
+    if (enVoices.length === 0) return;
+    convVoiceFemale = enVoices.find(v =>
+      /female|samantha|zira|karen|moira|victoria|allison|ava|fiona/i.test(v.name)
+    ) || enVoices[0];
+    convVoiceMale = enVoices.find(v =>
+      /male|daniel|david|alex|fred|james|tom|arthur|lee|oliver|mark/i.test(v.name)
+    ) || enVoices.find(v => v !== convVoiceFemale) || enVoices[1] || enVoices[0];
+  }
+
   if (window.speechSynthesis) {
-    window.speechSynthesis.onvoiceschanged = () => {};
+    window.speechSynthesis.onvoiceschanged = loadConvVoices;
+    loadConvVoices(); // Safari など即時取得できる場合のため
   }
 
   // =====================================================================
@@ -3871,17 +3887,13 @@
     utt.rate = parseFloat(convSpeedSlider.value);
     utt.lang = 'en-US';
 
-    // スピーカーに応じて声を切り替える
-    const voices = window.speechSynthesis.getVoices();
-    const enVoices = voices.filter(v => v.lang.startsWith('en'));
-    if (enVoices.length >= 2) {
-      const femaleVoice = enVoices.find(v =>
-        /female|samantha|zira|karen|moira|victoria|allison|ava|fiona/i.test(v.name)
-      ) || enVoices[0];
-      const maleVoice = enVoices.find(v =>
-        /male|daniel|david|alex|fred|james|tom|arthur|lee|oliver|mark/i.test(v.name)
-      ) || enVoices.find(v => v !== femaleVoice) || enVoices[1] || enVoices[0];
-      utt.voice = line.speaker === 'A' ? femaleVoice : maleVoice;
+    // スピーカーA: 高音（女性っぽく）、B: 低音（男性っぽく）
+    if (line.speaker === 'A') {
+      utt.pitch = 1.4;
+      if (convVoiceFemale) utt.voice = convVoiceFemale;
+    } else {
+      utt.pitch = 0.7;
+      if (convVoiceMale) utt.voice = convVoiceMale;
     }
 
     utt.onend = () => {
