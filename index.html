@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>英語チャンク学習アプリ</title>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-light: #818cf8;
+      --accent: #f59e0b;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --border: #e2e8f0;
+      --linking-bg: #fef3c7;
+      --linking-border: #f59e0b;
+      --linking-text: #92400e;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Hiragino Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+    h1 {
+      text-align: center;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.875rem;
+      margin-bottom: 28px;
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      max-width: 760px;
+      margin: 0 auto 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .section-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 10px;
+    }
+    /* テーマ入力 */
+    .theme-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .theme-input {
+      flex: 1;
+      min-width: 180px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .theme-input:focus { border-color: var(--primary); }
+    .theme-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .theme-tag {
+      background: #ede9fe;
+      color: var(--primary);
+      border: none;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .theme-tag:hover { background: #c7d2fe; }
+    /* ボタン */
+    .btn {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:active { transform: scale(0.97); }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+    .btn-secondary:hover { background: #e2e8f0; }
+    /* 英文表示エリア */
+    .sentence-area {
+      font-size: 1.35rem;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+      min-height: 60px;
+      padding: 4px 0;
+    }
+    .sentence-area .word { display: inline; }
+    /* リンキングハイライト */
+    .linking {
+      background: var(--linking-bg);
+      border-bottom: 2px solid var(--linking-border);
+      color: var(--linking-text);
+      border-radius: 3px;
+      padding: 0 2px;
+      cursor: pointer;
+      position: relative;
+      font-weight: 600;
+    }
+    .ja-translation {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-top: 8px;
+      line-height: 1.6;
+    }
+    /* チャンク解説 */
+    .chunks-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .chunk-badge {
+      background: #ede9fe;
+      color: var(--primary);
+      border-radius: 8px;
+      padding: 5px 12px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    /* リンキング解説カード */
+    .linking-list { display: flex; flex-direction: column; gap: 10px; }
+    .linking-item {
+      background: var(--linking-bg);
+      border-left: 4px solid var(--linking-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+    }
+    .linking-item .linking-phrase {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--linking-text);
+      margin-bottom: 3px;
+    }
+    .linking-item .linking-phonetic {
+      font-size: 0.85rem;
+      color: #78350f;
+      margin-bottom: 2px;
+    }
+    .linking-item .linking-desc {
+      font-size: 0.85rem;
+      color: var(--text);
+    }
+    /* プレーヤー */
+    .player-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .play-btn {
+      width: 52px; height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+      flex-shrink: 0;
+    }
+    .play-btn:hover { background: #4338ca; }
+    .play-btn:active { transform: scale(0.93); }
+    .speed-group {
+      display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px;
+    }
+    .speed-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex; justify-content: space-between;
+    }
+    .speed-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+    .speed-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+    .repeat-group {
+      display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted);
+    }
+    .repeat-group input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+    /* ステータス */
+    .status-bar {
+      text-align: center;
+      font-size: 0.82rem;
+      color: var(--muted);
+      min-height: 20px;
+    }
+    /* ローディング */
+    .loading {
+      display: inline-block;
+      width: 18px; height: 18px;
+      border: 2px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    /* empty state */
+    .empty-state {
+      text-align: center;
+      color: var(--muted);
+      padding: 24px 0;
+      font-size: 0.95rem;
+    }
+    /* 履歴 */
+    .history-list { display: flex; flex-direction: column; gap: 8px; }
+    .history-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+    .history-item:hover { background: #ede9fe; }
+    .history-en { font-size: 0.9rem; font-weight: 600; flex: 1; }
+    .history-theme {
+      font-size: 0.75rem;
+      color: var(--muted);
+      background: var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+    /* モーダル */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 28px;
+      max-width: 480px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      transform: scale(0.95);
+      transition: transform 0.2s;
+    }
+    .modal-overlay.open .modal { transform: scale(1); }
+    .modal h3 { font-size: 1rem; margin-bottom: 12px; color: var(--primary); }
+    .modal-close {
+      float: right; background: none; border: none; font-size: 1.3rem;
+      cursor: pointer; color: var(--muted); margin-top: -4px;
+    }
+    @media (max-width: 500px) {
+      .sentence-area { font-size: 1.1rem; }
+      h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <h1>🗣 英語チャンク学習アプリ</h1>
+  <p class="subtitle">代表的なチャンク × リンキングで自然な英語を身につけよう</p>
+
+  <!-- テーマ設定 -->
+  <div class="card">
+    <div class="section-title">テーマ（空欄でランダム）</div>
+    <div class="theme-row">
+      <input class="theme-input" id="themeInput" type="text" placeholder="例：カフェ、空港、ビジネス会議…" />
+      <button class="btn btn-primary" id="generateBtn">✨ 英文を生成</button>
+    </div>
+    <div class="theme-tags" id="themeTags">
+      <button class="theme-tag" data-theme="カフェ">☕ カフェ</button>
+      <button class="theme-tag" data-theme="空港">✈️ 空港</button>
+      <button class="theme-tag" data-theme="ショッピング">🛍 ショッピング</button>
+      <button class="theme-tag" data-theme="ビジネス会議">💼 ビジネス会議</button>
+      <button class="theme-tag" data-theme="レストラン">🍽 レストラン</button>
+      <button class="theme-tag" data-theme="ホテル">🏨 ホテル</button>
+      <button class="theme-tag" data-theme="日常会話">💬 日常会話</button>
+      <button class="theme-tag" data-theme="医療・病院">🏥 医療</button>
+      <button class="theme-tag" data-theme="観光">🗺 観光</button>
+    </div>
+  </div>
+
+  <!-- 英文表示 -->
+  <div class="card" id="sentenceCard">
+    <div class="section-title">生成された英文</div>
+    <div class="sentence-area" id="sentenceDisplay">
+      <div class="empty-state">上のボタンで英文を生成してください</div>
+    </div>
+    <div class="ja-translation" id="jaTranslation"></div>
+  </div>
+
+  <!-- 音声プレーヤー -->
+  <div class="card">
+    <div class="section-title">音声再生</div>
+    <div class="player-row">
+      <button class="play-btn" id="playBtn" title="再生">▶</button>
+      <div class="speed-group">
+        <div class="speed-label">
+          <span>スピード</span>
+          <span id="speedVal">1.0×</span>
+        </div>
+        <input class="speed-slider" id="speedSlider" type="range" min="0.5" max="2.0" step="0.1" value="1.0" />
+      </div>
+      <div class="repeat-group">
+        <input type="checkbox" id="repeatCheck" />
+        <label for="repeatCheck">リピート再生</label>
+      </div>
+    </div>
+    <div class="status-bar" id="statusBar"></div>
+  </div>
+
+  <!-- チャンク解説 -->
+  <div class="card" id="chunkCard">
+    <div class="section-title">使われているチャンク</div>
+    <div id="chunkDisplay">
+      <div class="empty-state">英文を生成するとチャンクが表示されます</div>
+    </div>
+  </div>
+
+  <!-- リンキング解説 -->
+  <div class="card" id="linkingCard">
+    <div class="section-title">🔗 リンキング解説</div>
+    <div id="linkingDisplay">
+      <div class="empty-state">英文を生成するとリンキング解説が表示されます</div>
+    </div>
+  </div>
+
+  <!-- 生成履歴 -->
+  <div class="card">
+    <div class="section-title">📚 生成履歴（クリックで再表示）</div>
+    <div id="historyDisplay">
+      <div class="empty-state">まだ履歴がありません</div>
+    </div>
+  </div>
+
+  <!-- リンキング詳細モーダル -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <h3 id="modalTitle"></h3>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+  // =====================================================================
+  // データ定義 ー テーマ別チャンク英文データベース
+  // =====================================================================
+  const DB = {
+    "カフェ": [
+      {
+        en: "I'd like to have a cup of coffee, please.",
+        ja: "コーヒーを一杯いただけますか。",
+        chunks: ["I'd like to ~", "a cup of ~"],
+        linkings: [
+          { phrase: "like_to", display: "like to", phonetic: "/laɪktə/", desc: "「like」の末尾 /k/ と「to」の /t/ が続き、/laɪktə/ のように /k/ が /t/ に吸収されて滑らかにつながる。" },
+          { phrase: "cup_of", display: "cup of", phonetic: "/kʌpəv/", desc: "「cup」の語末 /p/ と「of」の /ə/ がつながり、/kʌpəv/ と一息で発音される。" }
+        ]
+      },
+      {
+        en: "Can I get a latte to go, please?",
+        ja: "ラテをテイクアウトでいただけますか。",
+        chunks: ["Can I get ~", "to go"],
+        linkings: [
+          { phrase: "get_a", display: "get a", phonetic: "/ɡetə/", desc: "「get」末尾 /t/ と「a」弱形 /ə/ が連結して /ɡetə/ となる。" },
+          { phrase: "to_go", display: "to go", phonetic: "/təɡoʊ/", desc: "「to」弱形 /tə/ と「go」/ɡoʊ/ がつながり /təɡoʊ/ となる。" }
+        ]
+      },
+      {
+        en: "What kind of coffee do you have?",
+        ja: "どんな種類のコーヒーがありますか。",
+        chunks: ["What kind of ~", "do you have"],
+        linkings: [
+          { phrase: "kind_of", display: "kind of", phonetic: "/kaɪndəv/", desc: "「kind」末尾 /d/ と「of」弱形 /əv/ が連結して /kaɪndəv/ と聞こえる。" },
+          { phrase: "do_you", display: "do you", phonetic: "/dʒə/", desc: "「do」の /d/ と「you」の /j/ が融合して /dʒ/（口蓋化同化）→ /dʒə/。" }
+        ]
+      },
+      {
+        en: "I'd like to add some milk, please.",
+        ja: "ミルクを少し追加していただけますか。",
+        chunks: ["I'd like to ~", "add some ~"],
+        linkings: [
+          { phrase: "like_to", display: "like to", phonetic: "/laɪktə/", desc: "「like」末尾 /k/ と「to」弱形 /tə/ が連なり /laɪktə/ となる。" },
+          { phrase: "add_some", display: "add some", phonetic: "/ædsʌm/", desc: "「add」末尾 /d/ と「some」の /s/ が連なり /ædsʌm/ となる。" }
+        ]
+      },
+      {
+        en: "Do you have any decaf options?",
+        ja: "カフェインレスの選択肢はありますか。",
+        chunks: ["Do you have ~", "any ~"],
+        linkings: [
+          { phrase: "have_any", display: "have any", phonetic: "/hævəni/", desc: "「have」末尾 /v/ と「any」の /ə/ が連結して /hævəni/ となる。" },
+          { phrase: "do_you", display: "do you", phonetic: "/dʒə/", desc: "「do」/d/ と「you」/j/ が融合して /dʒ/ となる（口蓋化同化）。" }
+        ]
+      },
+      {
+        en: "Could I get a refill, please?",
+        ja: "おかわりをいただけますか。",
+        chunks: ["Could I get ~", "a refill"],
+        linkings: [
+          { phrase: "Could_I", display: "Could I", phonetic: "/kʊdaɪ/", desc: "「Could」末尾 /d/ と「I」/aɪ/ が連結して /kʊdaɪ/ と流れる。" },
+          { phrase: "get_a", display: "get a", phonetic: "/ɡetə/", desc: "「get」末尾 /t/ と「a」弱形 /ə/ が連結して /ɡetə/ となる。" }
+        ]
+      },
+      {
+        en: "How much is a large cappuccino?",
+        ja: "ラージサイズのカプチーノはいくらですか。",
+        chunks: ["How much is ~", "a large ~"],
+        linkings: [
+          { phrase: "much_is", display: "much is", phonetic: "/mʌtʃɪz/", desc: "「much」末尾 /tʃ/ と「is」弱形 /ɪz/ が連結して /mʌtʃɪz/ となる。" },
+          { phrase: "is_a", display: "is a", phonetic: "/ɪzə/", desc: "「is」末尾 /z/ と「a」弱形 /ə/ が連結して /ɪzə/ と聞こえる。" }
+        ]
+      },
+      {
+        en: "Is there anything sweet on the menu?",
+        ja: "メニューに甘いものはありますか。",
+        chunks: ["Is there ~", "on the menu"],
+        linkings: [
+          { phrase: "there_anything", display: "there anything", phonetic: "/ðerɪniθɪŋ/", desc: "「there」末尾 /r/ と「anything」の /ə/ がつながり /ðerɪniθɪŋ/ と流れる。" },
+          { phrase: "on_the", display: "on the", phonetic: "/ɒnðə/", desc: "「on」末尾 /n/ と「the」弱形 /ðə/ がつながって /ɒnðə/ となる。" }
+        ]
+      },
+      {
+        en: "I'll have the same as him, please.",
+        ja: "彼と同じものをお願いします。",
+        chunks: ["I'll have ~", "the same as ~"],
+        linkings: [
+          { phrase: "same_as", display: "same as", phonetic: "/seɪməz/", desc: "「same」末尾 /m/ と「as」弱形 /əz/ が連結して /seɪməz/ となる。" },
+          { phrase: "as_him", display: "as him", phonetic: "/əzɪm/", desc: "「as」弱形 /əz/ と「him」弱形 /ɪm/（h脱落）が連結して /əzɪm/ となる。" }
+        ]
+      },
+      {
+        en: "Can you make it a bit stronger?",
+        ja: "もう少し濃くしていただけますか。",
+        chunks: ["Can you ~", "make it ~", "a bit ~"],
+        linkings: [
+          { phrase: "make_it", display: "make it", phonetic: "/meɪkɪt/", desc: "「make」末尾 /k/ と「it」/ɪt/ が連結して /meɪkɪt/ となる。" },
+          { phrase: "a_bit", display: "a bit", phonetic: "/əbɪt/", desc: "「a」弱形 /ə/ と「bit」/bɪt/ がつながり /əbɪt/ となる。" }
+        ]
+      },
+      {
+        en: "I'm in a hurry, so I'll take it to go.",
+        ja: "急いでいるので、テイクアウトにします。",
+        chunks: ["I'm in a hurry", "take it to go"],
+        linkings: [
+          { phrase: "in_a", display: "in a", phonetic: "/ɪnə/", desc: "「in」末尾 /n/ と「a」弱形 /ə/ が連結して /ɪnə/ となる。" },
+          { phrase: "take_it", display: "take it", phonetic: "/teɪkɪt/", desc: "「take」末尾 /k/ と「it」/ɪt/ が連結して /teɪkɪt/ となる。" }
+        ]
+      },
+      {
+        en: "Do you guys have free Wi-Fi here?",
+        ja: "ここは無料Wi-Fiがありますか。",
+        chunks: ["Do you have ~", "free ~ here"],
+        linkings: [
+          { phrase: "you_guys", display: "you guys", phonetic: "/jəɡaɪz/", desc: "「you」弱形 /jə/ と「guys」/ɡaɪz/ がつながり /jəɡaɪz/ となる。" },
+          { phrase: "have_free", display: "have free", phonetic: "/hævfriː/", desc: "「have」末尾 /v/ と「free」の /f/ が連なり /hævfriː/ となる。" }
+        ]
+      },
+      {
+        en: "Could I have a glass of water as well?",
+        ja: "水も一杯いただけますか。",
+        chunks: ["Could I have ~", "a glass of ~", "as well"],
+        linkings: [
+          { phrase: "glass_of", display: "glass of", phonetic: "/ɡlæsəv/", desc: "「glass」末尾 /s/ と「of」弱形 /əv/ が連結して /ɡlæsəv/ となる。" },
+          { phrase: "as_well", display: "as well", phonetic: "/əzˈwel/", desc: "「as」弱形 /əz/ と「well」/wel/ がつながり /əzˈwel/ となる。" }
+        ]
+      },
+      {
+        en: "Is this seat taken?",
+        ja: "この席は空いていますか。",
+        chunks: ["Is ~ taken"],
+        linkings: [
+          { phrase: "Is_this", display: "Is this", phonetic: "/ɪzðɪs/", desc: "「is」末尾 /z/ と「this」の /ð/ が連なり /ɪzðɪs/ となる。" },
+          { phrase: "this_seat", display: "this seat", phonetic: "/ðɪssiːt/", desc: "「this」末尾 /s/ と「seat」の /s/ が重なり、/s/ が一回だけ長く発音される（重子音）。" }
+        ]
+      },
+      {
+        en: "I'd love to try something new today.",
+        ja: "今日は何か新しいものを試してみたいです。",
+        chunks: ["I'd love to ~", "try something new"],
+        linkings: [
+          { phrase: "love_to", display: "love to", phonetic: "/lʌvtə/", desc: "「love」末尾 /v/ と「to」弱形 /tə/ が連結して /lʌvtə/ となる。" },
+          { phrase: "something_new", display: "something new", phonetic: "/sʌmθɪŋnjuː/", desc: "「something」末尾 /ŋ/ と「new」/njuː/ が連なり /sʌmθɪŋnjuː/ となる。" }
+        ]
+      },
+      {
+        en: "What do you recommend?",
+        ja: "何かおすすめはありますか。",
+        chunks: ["What do you recommend"],
+        linkings: [
+          { phrase: "What_do", display: "What do", phonetic: "/wɒtdə/", desc: "「What」末尾 /t/ と「do」弱形 /də/ が連結して /wɒtdə/ となる。" },
+          { phrase: "do_you", display: "do you", phonetic: "/dʒə/", desc: "「do」の /d/ と「you」の /j/ が融合して /dʒ/（口蓋化同化）→ /dʒə/。" }
+        ]
+      },
+      {
+        en: "I'll take a slice of that cake.",
+        ja: "そのケーキを一切れください。",
+        chunks: ["I'll take ~", "a slice of ~"],
+        linkings: [
+          { phrase: "take_a", display: "take a", phonetic: "/teɪkə/", desc: "「take」末尾 /k/ と「a」弱形 /ə/ が連結して /teɪkə/ となる。" },
+          { phrase: "slice_of", display: "slice of", phonetic: "/slaɪsəv/", desc: "「slice」末尾 /s/ と「of」弱形 /əv/ が連結して /slaɪsəv/ となる。" }
+        ]
+      },
+      {
+        en: "Could you warm this up for me?",
+        ja: "これを温めていただけますか。",
+        chunks: ["Could you ~", "warm ~ up"],
+        linkings: [
+          { phrase: "Could_you", display: "Could you", phonetic: "/kʊdʒə/", desc: "「Could」の /d/ と「you」の /j/ が融合して /dʒ/ → /kʊdʒə/（口蓋化同化）。" },
+          { phrase: "warm_this", display: "warm this", phonetic: "/wɔːrmðɪs/", desc: "「warm」末尾 /m/ と「this」の /ð/ が連なり /wɔːrmðɪs/ となる。" }
+        ]
+      },
+      {
+        en: "I'm allergic to nuts, just so you know.",
+        ja: "ナッツアレルギーがあるのでご注意ください。",
+        chunks: ["I'm allergic to ~", "just so you know"],
+        linkings: [
+          { phrase: "allergic_to", display: "allergic to", phonetic: "/əˈlɜːrdʒɪktə/", desc: "「allergic」末尾 /k/ と「to」弱形 /tə/ が連結して /əˈlɜːrdʒɪktə/ となる。" },
+          { phrase: "so_you", display: "so you", phonetic: "/soʊjə/", desc: "「so」末尾 /oʊ/ と「you」弱形 /jə/ がつながり /soʊjə/ となる。" }
+        ]
+      },
+      {
+        en: "Can I pay by card?",
+        ja: "カードで払えますか。",
+        chunks: ["Can I ~", "pay by ~"],
+        linkings: [
+          { phrase: "Can_I", display: "Can I", phonetic: "/kænaɪ/", desc: "「Can」末尾 /n/ と「I」/aɪ/ が連結して /kænaɪ/ となる。" },
+          { phrase: "pay_by", display: "pay by", phonetic: "/peɪbaɪ/", desc: "「pay」末尾 /eɪ/ と「by」/baɪ/ がつながり /peɪbaɪ/ となる。" }
+        ]
+      },
+      {
+        en: "Keep the change, please.",
+        ja: "おつりはいりません。",
+        chunks: ["Keep the change"],
+        linkings: [
+          { phrase: "Keep_the", display: "Keep the", phonetic: "/kiːpðə/", desc: "「Keep」末尾 /p/ と「the」弱形 /ðə/ が連なり /kiːpðə/ となる。" },
+          { phrase: "the_change", display: "the change", phonetic: "/ðətʃeɪndʒ/", desc: "「the」弱形 /ðə/ と「change」の /tʃ/ が連なり /ðətʃeɪndʒ/ となる。" }
+        ]
+      },
+      {
+        en: "Could I get an extra shot of espresso?",
+        ja: "エスプレッソのショットをもう一回追加できますか。",
+        chunks: ["Could I get ~", "an extra ~", "shot of ~"],
+        linkings: [
+          { phrase: "get_an", display: "get an", phonetic: "/ɡetən/", desc: "「get」末尾 /t/ と「an」/ən/ が連結して /ɡetən/ となる。" },
+          { phrase: "shot_of", display: "shot of", phonetic: "/ʃɒtəv/", desc: "「shot」末尾 /t/ と「of」弱形 /əv/ が連結して /ʃɒtəv/ となる。" }
+        ]
+      },
+      {
+        en: "I usually come here every morning.",
+        ja: "毎朝ここに来ています。",
+        chunks: ["I usually ~", "every morning"],
+        linkings: [
+          { phrase: "come_here", display: "come here", phonetic: "/kʌmhɪər/", desc: "「come」末尾 /m/ と「here」の /h/ が連なる。/h/ は弱化しやすく /kʌmɪər/ と聞こえることも。" },
+          { phrase: "every_morning", display: "every morning", phonetic: "/evrɪmɔːrnɪŋ/", desc: "「every」末尾 /i/ と「morning」の /m/ がつながり /evrɪmɔːrnɪŋ/ と流れる。" }
+        ]
+      },
+      {
+        en: "Do you have oat milk by any chance?",
+        ja: "もしかしてオーツミルクはありますか。",
+        chunks: ["Do you have ~", "by any chance"],
+        linkings: [
+          { phrase: "have_oat", display: "have oat", phonetic: "/hævoʊt/", desc: "「have」末尾 /v/ と「oat」の /oʊ/ が連結して /hævoʊt/ となる。" },
+          { phrase: "by_any", display: "by any", phonetic: "/baɪɛni/", desc: "「by」末尾 /aɪ/ と「any」の /ɛ/ が連なり /baɪɛni/ となる。" }
+        ]
+      },
+      {
+        en: "I'd like to sit by the window, if possible.",
+        ja: "できれば窓際に座りたいです。",
+        chunks: ["I'd like to ~", "by the window", "if possible"],
+        linkings: [
+          { phrase: "sit_by", display: "sit by", phonetic: "/sɪtbaɪ/", desc: "「sit」末尾 /t/ と「by」の /b/ が連なり /sɪtbaɪ/ となる。" },
+          { phrase: "by_the", display: "by the", phonetic: "/baɪðə/", desc: "「by」末尾 /aɪ/ と「the」弱形 /ðə/ が連なり /baɪðə/ となる。" }
+        ]
+      },
+      {
+        en: "The weather's been great for sitting outside.",
+        ja: "外で座るには最高のお天気ですね。",
+        chunks: ["~ 's been great", "for ~ing"],
+        linkings: [
+          { phrase: "been_great", display: "been great", phonetic: "/biːnɡreɪt/", desc: "「been」末尾 /n/ と「great」の /ɡ/ が連なり /biːnɡreɪt/ となる。" },
+          { phrase: "for_sitting", display: "for sitting", phonetic: "/fərsɪtɪŋ/", desc: "「for」弱形 /fər/ と「sitting」の /s/ がつながり /fərsɪtɪŋ/ となる。" }
+        ]
+      },
+      {
+        en: "I'm meeting a friend here in a bit.",
+        ja: "もうすぐここで友人と待ち合わせです。",
+        chunks: ["I'm ~ing", "in a bit"],
+        linkings: [
+          { phrase: "meeting_a", display: "meeting a", phonetic: "/miːɾɪŋə/", desc: "「meeting」の /t/ が母音間でフラップ化して /ɾ/ になり、「a」弱形 /ə/ とつながって /miːɾɪŋə/ となる。" },
+          { phrase: "in_a", display: "in a", phonetic: "/ɪnə/", desc: "「in」末尾 /n/ と「a」弱形 /ə/ が連結して /ɪnə/ となる。" }
+        ]
+      },
+      {
+        en: "Do you have any seasonal drinks?",
+        ja: "季節限定のドリンクはありますか。",
+        chunks: ["Do you have ~", "any ~ drinks"],
+        linkings: [
+          { phrase: "have_any", display: "have any", phonetic: "/hævəni/", desc: "「have」末尾 /v/ と「any」の /ə/ が連結して /hævəni/ となる。" },
+          { phrase: "any_seasonal", display: "any seasonal", phonetic: "/eniˈsiːzənl/", desc: "「any」末尾 /i/ と「seasonal」の /s/ が連なり /eniˈsiːzənl/ となる。" }
+        ]
+      },
+      {
+        en: "I'll have a hot chocolate, please.",
+        ja: "ホットチョコレートをください。",
+        chunks: ["I'll have ~", "hot chocolate"],
+        linkings: [
+          { phrase: "have_a", display: "have a", phonetic: "/hævə/", desc: "「have」末尾 /v/ と「a」弱形 /ə/ が連結して /hævə/ となる。" },
+          { phrase: "hot_chocolate", display: "hot chocolate", phonetic: "/hɒttʃɒklət/", desc: "「hot」末尾 /t/ と「chocolate」の /tʃ/ が連なり、/t/ と /tʃ/ が融合する。" }
+        ]
+      },
+      {
+        en: "Can I see the menu?",
+        ja: "メニューを見せていただけますか。",
+        chunks: ["Can I see ~", "the menu"],
+        linkings: [
+          { phrase: "Can_I", display: "Can I", phonetic: "/kænaɪ/", desc: "「Can」末尾 /n/ と「I」/aɪ/ が連結して /kænaɪ/ となる。" },
+          { phrase: "see_the", display: "see the", phonetic: "/siːðə/", desc: "「see」末尾 /iː/ と「the」弱形 /ðə/ が連なり /siːðə/ となる。" }
+        ]
+      },
+      {
+        en: "What time do you close today?",
+        ja: "今日は何時に閉店ですか。",
+        chunks: ["What time ~", "do you close"],
+        linkings: [
+          { phrase: "time_do", display: "time do", phonetic: "/taɪmdə/", desc: "「time」末尾 /m/ と「do」弱形 /də/ がつながり /taɪmdə/ となる。" },
+          { phrase: "do_you", display: "do you", phonetic: "/dʒə/", desc: "「do」の /d/ と「you」の /j/ が融合して /dʒ/（口蓋化同化）→ /dʒə/。" }
+        ]
+      },
+      {
+        en: "I've been coming here for years.",
+        ja: "何年もここに来ています。",
+        chunks: ["I've been ~ing", "for years"],
+        linkings: [
+          { phrase: "been_coming", display: "been coming", phonetic: "/biːnkʌmɪŋ/", desc: "「been」末尾 /n/ と「coming」の /k/ が連なり /biːnkʌmɪŋ/ となる。" },
+          { phrase: "for_years", display: "for years", phonetic: "/fərjɪərz/", desc: "「for」弱形 /fər/ と「years」の /j/ がつながり /fərjɪərz/ となる。" }
+        ]
+      },
+      {
+        en: "This coffee smells amazing.",
+        ja: "このコーヒーはとてもいい香りですね。",
+        chunks: ["~ smells amazing"],
+        linkings: [
+          { phrase: "smells_amazing", display: "smells amazing", phonetic: "/smɛlzəˈmeɪzɪŋ/", desc: "「smells」末尾 /z/ と「amazing」の /ə/ が連結して /smɛlzəˈmeɪzɪŋ/ となる。" },
+          { phrase: "coffee_smells", display: "coffee smells", phonetic: "/kɒfismɛlz/", desc: "「coffee」末尾 /i/ と「smells」の /sm/ がつながり /kɒfismɛlz/ となる。" }
+        ]
+      },
+      {
+        en: "Could I get a discount with this coupon?",
+        ja: "このクーポンで割引していただけますか。",
+        chunks: ["Could I get ~", "a discount", "with this ~"],
+        linkings: [
+          { phrase: "get_a", display: "get a", phonetic: "/ɡetə/", desc: "「get」末尾 /t/ と「a」弱形 /ə/ が連結して /ɡetə/ となる。" },
+          { phrase: "with_this", display: "with this", phonetic: "/wɪððɪs/", desc: "「with」末尾 /ð/ と「this」の /ð/ が重なり、/ð/ が一回だけ長く発音される（重子音）。" }
+        ]
+      },
+      {
+        en: "I'd like to order something to eat as well.",
+        ja: "食べ物も注文したいです。",
+        chunks: ["I'd like to ~", "order something", "as well"],
+        linkings: [
+          { phrase: "order_something", display: "order something", phonetic: "/ɔːrdərsʌmθɪŋ/", desc: "「order」末尾 /r/ と「something」の /s/ がつながり /ɔːrdərsʌmθɪŋ/ となる。" },
+          { phrase: "eat_as", display: "eat as", phonetic: "/iːtəz/", desc: "「eat」末尾 /t/ と「as」弱形 /əz/ が連結して /iːtəz/ となる。" }
+        ]
+      },
+      {
+        en: "Is the kitchen still open?",
+        ja: "キッチンはまだ開いていますか。",
+        chunks: ["Is ~ still open"],
+        linkings: [
+          { phrase: "still_open", display: "still open", phonetic: "/stɪloʊpən/", desc: "「still」末尾 /l/ と「open」の /oʊ/ が連結して /stɪloʊpən/ となる。" },
+          { phrase: "kitchen_still", display: "kitchen still", phonetic: "/kɪtʃɪnstɪl/", desc: "「kitchen」末尾 /n/ と「still」の /st/ が連なり /kɪtʃɪnstɪl/ となる。" }
+        ]
+      },
+      {
+        en: "I'll just have a black coffee, nothing fancy.",
+        ja: "ブラックコーヒーだけで十分です。",
+        chunks: ["I'll just have ~", "nothing fancy"],
+        linkings: [
+          { phrase: "just_have", display: "just have", phonetic: "/dʒʌsthæv/", desc: "「just」末尾 /t/ と「have」の /h/ が連なる。/h/ が弱化して /dʒʌstæv/ と聞こえることも。" },
+          { phrase: "nothing_fancy", display: "nothing fancy", phonetic: "/nʌθɪŋfænsi/", desc: "「nothing」末尾 /ŋ/ と「fancy」の /f/ が連なり /nʌθɪŋfænsi/ となる。" }
+        ]
+      },
+      {
+        en: "Could you put less sugar in it?",
+        ja: "砂糖を少なめにしていただけますか。",
+        chunks: ["Could you ~", "less ~ in it"],
+        linkings: [
+          { phrase: "Could_you", display: "Could you", phonetic: "/kʊdʒə/", desc: "「Could」の /d/ と「you」の /j/ が融合して /dʒ/ → /kʊdʒə/。" },
+          { phrase: "in_it", display: "in it", phonetic: "/ɪnɪt/", desc: "「in」末尾 /n/ と「it」/ɪt/ が連結して /ɪnɪt/ となる。" }
+        ]
+      },
+      {
+        en: "I'm not sure what I want yet.",
+        ja: "まだ何が欲しいか決まっていません。",
+        chunks: ["I'm not sure ~", "what I want"],
+        linkings: [
+          { phrase: "not_sure", display: "not sure", phonetic: "/nɒtʃʊər/", desc: "「not」末尾 /t/ と「sure」の /ʃ/ が連なり /nɒtʃʊər/ となる。" },
+          { phrase: "what_I", display: "what I", phonetic: "/wɒtaɪ/", desc: "「what」末尾 /t/ と「I」/aɪ/ が連結して /wɒtaɪ/ となる。" }
+        ]
+      },
+      {
+        en: "This is by far the best cafe in town.",
+        ja: "ここは街で断然一番のカフェです。",
+        chunks: ["by far the best ~", "in town"],
+        linkings: [
+          { phrase: "by_far", display: "by far", phonetic: "/baɪfɑːr/", desc: "「by」末尾 /aɪ/ と「far」の /f/ が連なり /baɪfɑːr/ となる。" },
+          { phrase: "far_the", display: "far the", phonetic: "/fɑːrðə/", desc: "「far」末尾 /r/ と「the」弱形 /ðə/ がつながり /fɑːrðə/ となる。" }
+        ]
+      },
+      {
+        en: "Do you have any loyalty cards?",
+        ja: "ポイントカードはありますか。",
+        chunks: ["Do you have ~", "loyalty cards"],
+        linkings: [
+          { phrase: "have_any", display: "have any", phonetic: "/hævəni/", desc: "「have」末尾 /v/ と「any」の /ə/ が連結して /hævəni/ となる。" },
+          { phrase: "any_loyalty", display: "any loyalty", phonetic: "/eniˈlɔɪəlti/", desc: "「any」末尾 /i/ と「loyalty」の /l/ が連なり /eniˈlɔɪəlti/ となる。" }
+        ]
+      },
+      {
+        en: "I'll have a green tea latte, please.",
+        ja: "抹茶ラテをください。",
+        chunks: ["I'll have ~", "green tea latte"],
+        linkings: [
+          { phrase: "have_a", display: "have a", phonetic: "/hævə/", desc: "「have」末尾 /v/ と「a」弱形 /ə/ が連結して /hævə/ となる。" },
+          { phrase: "tea_latte", display: "tea latte", phonetic: "/tiːˈlɑːteɪ/", desc: "「tea」末尾 /iː/ と「latte」の /l/ が連なり /tiːˈlɑːteɪ/ となる。" }
+        ]
+      },
+      {
+        en: "Can I use the restroom?",
+        ja: "トイレを使えますか。",
+        chunks: ["Can I use ~"],
+        linkings: [
+          { phrase: "Can_I", display: "Can I", phonetic: "/kænaɪ/", desc: "「Can」末尾 /n/ と「I」/aɪ/ が連結して /kænaɪ/ となる。" },
+          { phrase: "use_the", display: "use the", phonetic: "/juːzðə/", desc: "「use」末尾 /z/ と「the」弱形 /ðə/ が連なり /juːzðə/ となる。" }
+        ]
+      },
+      {
+        en: "Could I get this with almond milk instead?",
+        ja: "これをアーモンドミルクに変えてもらえますか。",
+        chunks: ["Could I get ~", "with ~ instead"],
+        linkings: [
+          { phrase: "get_this", display: "get this", phonetic: "/ɡetðɪs/", desc: "「get」末尾 /t/ と「this」の /ð/ が連なり /ɡetðɪs/ となる。" },
+          { phrase: "milk_instead", display: "milk instead", phonetic: "/mɪlkɪnˈsted/", desc: "「milk」末尾 /k/ と「instead」の /ɪ/ が連結して /mɪlkɪnˈsted/ となる。" }
+        ]
+      },
+      {
+        en: "I just need a quick coffee break.",
+        ja: "ちょっとコーヒーブレイクが必要です。",
+        chunks: ["I just need ~", "a quick ~"],
+        linkings: [
+          { phrase: "need_a", display: "need a", phonetic: "/niːdə/", desc: "「need」末尾 /d/ と「a」弱形 /ə/ が連結して /niːdə/ となる。" },
+          { phrase: "quick_coffee", display: "quick coffee", phonetic: "/kwɪkkɒfi/", desc: "「quick」末尾 /k/ と「coffee」の /k/ が重なり、/k/ が一回だけ長く発音される（重子音）。" }
+        ]
+      },
+      {
+        en: "Thank you so much for your help.",
+        ja: "ご親切にありがとうございます。",
+        chunks: ["Thank you so much", "for your help"],
+        linkings: [
+          { phrase: "you_so", display: "you so", phonetic: "/jəsoʊ/", desc: "「you」弱形 /jə/ と「so」/soʊ/ がつながり /jəsoʊ/ となる。" },
+          { phrase: "for_your", display: "for your", phonetic: "/fərjər/", desc: "「for」弱形 /fər/ と「your」弱形 /jər/ がつながり /fərjər/ となる。" }
+        ]
+      },
+      {
+        en: "I'll be right back.",
+        ja: "すぐに戻ります。",
+        chunks: ["I'll be right back"],
+        linkings: [
+          { phrase: "be_right", display: "be right", phonetic: "/bəraɪt/", desc: "「be」弱形 /bə/ と「right」/raɪt/ がつながり /bəraɪt/ となる。" },
+          { phrase: "right_back", display: "right back", phonetic: "/raɪtbæk/", desc: "「right」末尾 /t/ と「back」の /b/ が連なり /raɪtbæk/ となる。" }
+        ]
+      },
+      {
+        en: "I'll try the house blend today.",
+        ja: "今日はハウスブレンドを試してみます。",
+        chunks: ["I'll try ~", "house blend"],
+        linkings: [
+          { phrase: "try_the", display: "try the", phonetic: "/traɪðə/", desc: "「try」末尾 /aɪ/ と「the」弱形 /ðə/ が連なり /traɪðə/ となる。" },
+          { phrase: "house_blend", display: "house blend", phonetic: "/haʊsblend/", desc: "「house」末尾 /s/ と「blend」の /bl/ が連なり /haʊsblend/ となる。" }
+        ]
+      },
+      {
+        en: "Do you mind if I plug in my laptop here?",
+        ja: "ここでノートパソコンを充電してもいいですか。",
+        chunks: ["Do you mind if ~", "plug in"],
+        linkings: [
+          { phrase: "mind_if", display: "mind if", phonetic: "/maɪndɪf/", desc: "「mind」末尾 /d/ と「if」の /ɪ/ が連結して /maɪndɪf/ となる。" },
+          { phrase: "plug_in", display: "plug in", phonetic: "/plʌɡɪn/", desc: "「plug」末尾 /ɡ/ と「in」/ɪn/ が連結して /plʌɡɪn/ となる。" }
+        ]
+      },
+      {
+        en: "That was delicious. I'll definitely come back.",
+        ja: "美味しかったです。また必ず来ます。",
+        chunks: ["That was ~", "I'll definitely ~", "come back"],
+        linkings: [
+          { phrase: "was_delicious", display: "was delicious", phonetic: "/wəzdɪˈlɪʃəs/", desc: "「was」弱形 /wəz/ と「delicious」の /d/ がつながり /wəzdɪˈlɪʃəs/ となる。" },
+          { phrase: "come_back", display: "come back", phonetic: "/kʌmbæk/", desc: "「come」末尾 /m/ と「back」の /b/ が連なり /kʌmbæk/ となる。" }
+        ]
+      },
+      {
+        en: "Could I get a bag for this, please?",
+        ja: "これを袋に入れてもらえますか。",
+        chunks: ["Could I get ~", "a bag for ~"],
+        linkings: [
+          { phrase: "Could_I", display: "Could I", phonetic: "/kʊdaɪ/", desc: "「Could」末尾 /d/ と「I」/aɪ/ が連結して /kʊdaɪ/ と流れる。" },
+          { phrase: "bag_for", display: "bag for", phonetic: "/bæɡfər/", desc: "「bag」末尾 /ɡ/ と「for」弱形 /fər/ が連なり /bæɡfər/ となる。" }
+        ]
+      },
+      {
+        en: "Is there a student discount?",
+        ja: "学生割引はありますか。",
+        chunks: ["Is there ~", "a ~ discount"],
+        linkings: [
+          { phrase: "there_a", display: "there a", phonetic: "/ðerə/", desc: "「there」末尾 /r/ と「a」弱形 /ə/ が連結して /ðerə/ となる。" },
+          { phrase: "student_discount", display: "student discount", phonetic: "/stjuːdəntˈdɪskaʊnt/", desc: "「student」末尾 /t/ と「discount」の /d/ が連なり /t/ が弱化気味になる。" }
+        ]
+      },
+      {
+        en: "How long is the wait for a table?",
+        ja: "テーブルの待ち時間はどのくらいですか。",
+        chunks: ["How long is ~", "wait for a ~"],
+        linkings: [
+          { phrase: "long_is", display: "long is", phonetic: "/lɒŋɪz/", desc: "「long」末尾 /ŋ/ と「is」弱形 /ɪz/ が連結して /lɒŋɪz/ となる。" },
+          { phrase: "wait_for", display: "wait for", phonetic: "/weɪtfər/", desc: "「wait」末尾 /t/ と「for」弱形 /fər/ が連なり /weɪtfər/ となる。" }
+        ]
+      },
+      {
+        en: "I'll take it for here, not to go.",
+        ja: "テイクアウトではなく、こちらでいただきます。",
+        chunks: ["I'll take it ~", "for here", "not to go"],
+        linkings: [
+          { phrase: "take_it", display: "take it", phonetic: "/teɪkɪt/", desc: "「take」末尾 /k/ と「it」/ɪt/ が連結して /teɪkɪt/ となる。" },
+          { phrase: "for_here", display: "for here", phonetic: "/fərhɪər/", desc: "「for」弱形 /fər/ と「here」の /h/ が連なる。/h/ が弱化して /fərɪər/ と聞こえることも。" }
+        ]
+      },
+      {
+        en: "Could I try a sample of that before I order?",
+        ja: "注文する前にそれを試飲できますか。",
+        chunks: ["Could I ~", "try a sample", "before I ~"],
+        linkings: [
+          { phrase: "try_a", display: "try a", phonetic: "/traɪə/", desc: "「try」末尾 /aɪ/ と「a」弱形 /ə/ が連結して /traɪə/ となる。" },
+          { phrase: "before_I", display: "before I", phonetic: "/bɪfɔːraɪ/", desc: "「before」末尾 /r/ と「I」/aɪ/ が連結して /bɪfɔːraɪ/ となる。" }
+        ]
+      },
+      {
+        en: "This place is always packed on weekends.",
+        ja: "ここは週末いつも混んでいますね。",
+        chunks: ["~ is always packed", "on weekends"],
+        linkings: [
+          { phrase: "is_always", display: "is always", phonetic: "/ɪzˈɔːlweɪz/", desc: "「is」弱形 /ɪz/ と「always」の /ɔː/ が連結して /ɪzˈɔːlweɪz/ となる。" },
+          { phrase: "on_weekends", display: "on weekends", phonetic: "/ɒnˈwiːkendz/", desc: "「on」末尾 /n/ と「weekends」の /w/ が連なり /ɒnˈwiːkendz/ となる。" }
+        ]
+      },
+      {
+        en: "Do you serve breakfast all day?",
+        ja: "一日中朝食メニューは提供していますか。",
+        chunks: ["Do you serve ~", "all day"],
+        linkings: [
+          { phrase: "serve_breakfast", display: "serve breakfast", phonetic: "/sɜːrvˈbrekfəst/", desc: "「serve」末尾 /v/ と「breakfast」の /b/ が連なり /sɜːrvˈbrekfəst/ となる。" },
+          { phrase: "all_day", display: "all day", phonetic: "/ɔːldeɪ/", desc: "「all」末尾 /l/ と「day」の /d/ が連なり /ɔːldeɪ/ となる。" }
+        ]
+      },
+      {
+        en: "I'd like two of those croissants, please.",
+        ja: "あのクロワッサンを2つください。",
+        chunks: ["I'd like ~", "two of those ~"],
+        linkings: [
+          { phrase: "two_of", display: "two of", phonetic: "/tuːəv/", desc: "「two」末尾 /uː/ と「of」弱形 /əv/ が連結して /tuːəv/ となる。" },
+          { phrase: "of_those", display: "of those", phonetic: "/əvðoʊz/", desc: "「of」弱形 /əv/ と「those」の /ð/ が連なり /əvðoʊz/ となる。" }
+        ]
+      }
+    ],
+    "空港": [
+      {
+        en: "I'm checking in for my flight to New York.",
+        ja: "ニューヨーク行きのフライトのチェックインをします。",
+        chunks: ["checking in for ~", "flight to ~"],
+        linkings: [
+          { phrase: "Could_I", display: "Could I", phonetic: "/kʊdaɪ/", desc: "「Could」末尾 /d/ と「I」/aɪ/ が連結して /kʊdaɪ/ と流れる。" },
+          { phrase: "for_two", display: "for two", phonetic: "/fərtúː/", desc: "「for」末尾 /r/ と「two」/t/ が繋がり /fərtúː/ になる（弱形 /fər/ ）。" }
+        ]
+      },
+      {
+        en: "Would you like something to eat with that?",
+        ja: "一緒に何か食べるものはいかがですか。",
+        chunks: ["Would you like ~", "something to ~"],
+        linkings: [
+          { phrase: "Would_you", display: "Would you", phonetic: "/wʊdʒə/", desc: "「Would」の /d/ と「you」の /j/ が融合して /dʒ/ になり、/wʊdʒə/ と発音される（同化）。" },
+          { phrase: "to_eat", display: "to eat", phonetic: "/tuːíːt/", desc: "「to」末尾 /t/ と「eat」/iː/ がつながり /tuːíːt/ となる。" }
+        ]
+      }
+    ],
+    "空港": [
+      {
+        en: "I'm checking in for my flight to New York.",
+        ja: "ニューヨーク行きのフライトのチェックインをします。",
+        chunks: ["checking in for ~", "flight to ~"],
+        linkings: [
+          { phrase: "GitHub Pageschecking_in", display: "checking in", phonetic: "/tʃekɪŋɪn/", desc: "「checking」末尾の /ŋ/ と「in」/ɪn/ がつながり /tʃekɪŋɪn/ と一続きになる。" },
+          { phrase: "flight_to", display: "flight to", phonetic: "/flaɪttə/", desc: "「flight」末尾 /t/ と「to」弱形 /tə/ が重なり、/t/ が一回だけ発音される（重子音）。" }
+        ]
+      },
+      {
+        en: "Could you tell me where the boarding gate is?",
+        ja: "搭乗ゲートはどこか教えていただけますか。",
+        chunks: ["Could you tell me ~", "where ~ is"],
+        linkings: [
+          { phrase: "Could_you", display: "Could you", phonetic: "/kʊdʒə/", desc: "「Could」/d/ と「you」/j/ が融合して /dʒ/ → /kʊdʒə/ に変化（口蓋化同化）。" },
+          { phrase: "tell_me", display: "tell me", phonetic: "/telmi/", desc: "「tell」末尾 /l/ と「me」/m/ がつながり、/l/ のあと息継ぎなく /m/ へ移行。" }
+        ]
+      },
+      {
+        en: "I have a tight connection, so I need to hurry.",
+        ja: "乗り継ぎ時間がタイトなので急がなければなりません。",
+        chunks: ["I have a ~", "need to ~"],
+        linkings: [
+          { phrase: "have_a", display: "have a", phonetic: "/hævə/", desc: "「have」末尾 /v/ と不定冠詞「a」/ə/ がつながり /hævə/ と聞こえる。" },
+          { phrase: "need_to", display: "need to", phonetic: "/niːdə/", desc: "「need」末尾 /d/ と「to」弱形 /tə/ が合わさり、/d/ が弱化して /niːdə/ となる。" }
+        ]
+      }
+    ],
+    "ショッピング": [
+      {
+        en: "I'm looking for a gift for a friend of mine.",
+        ja: "友人へのプレゼントを探しています。",
+        chunks: ["I'm looking for ~", "a friend of mine"],
+        linkings: [
+          { phrase: "looking_for", display: "looking for", phonetic: "/lʊkɪŋfər/", desc: "「looking」末尾 /ŋ/ と「for」弱形 /fər/ がつながって /lʊkɪŋfər/ と流れる。" },
+          { phrase: "friend_of", display: "friend of", phonetic: "/frendəv/", desc: "「friend」末尾 /d/ と「of」弱形 /əv/ がつながり /frendəv/ となる。" }
+        ]
+      },
+      {
+        en: "Do you have this in a different size?",
+        ja: "これの別のサイズはありますか。",
+        chunks: ["Do you have ~", "in a ~ size"],
+        linkings: [
+          { phrase: "have_this", display: "have this", phonetic: "/hævðɪs/", desc: "「have」の /v/ と「this」の /ð/ が連なり、唇歯→歯茎の連続で /hævðɪs/ となる。" },
+          { phrase: "in_a", display: "in a", phonetic: "/ɪnə/", desc: "「in」末尾 /n/ と「a」弱形 /ə/ が連結して /ɪnə/ とつながる。" }
+        ]
+      },
+      {
+        en: "Can I try this on before I buy it?",
+        ja: "買う前にこれを試着してもいいですか。",
+        chunks: ["Can I ~", "try ~ on", "before I ~"],
+        linkings: [
+          { phrase: "try_this", display: "try this", phonetic: "/traɪðɪs/", desc: "「try」末尾 /aɪ/ と「this」の /ð/ が連結して /traɪðɪs/ と続く。" },
+          { phrase: "on_before", display: "on before", phonetic: "/ɒnbɪfɔːr/", desc: "「on」末尾 /n/ と「before」の /b/ が連なり /ɒnbɪfɔːr/ となる。" }
+        ]
+      }
+    ],
+    "ビジネス会議": [
+      {
+        en: "I'd like to go over the agenda before we get started.",
+        ja: "始める前にアジェンダを確認したいと思います。",
+        chunks: ["I'd like to ~", "go over ~", "before we ~", "get started"],
+        linkings: [
+          { phrase: "go_over", display: "go over", phonetic: "/ɡoʊoʊvər/", desc: "「go」末尾 /oʊ/ と「over」の /oʊ/ がつながり、母音連続で滑らかにつながる。" },
+          { phrase: "get_started", display: "get started", phonetic: "/ɡetˈstɑːrtɪd/", desc: "「get」末尾 /t/ と「started」の /st/ が連なり、/t/ が弱化して /ɡeˈstɑːrtɪd/ のように聞こえることも。" }
+        ]
+      },
+      {
+        en: "Could you bring me up to speed on the latest changes?",
+        ja: "最新の変更点について最新情報を教えていただけますか。",
+        chunks: ["Could you ~", "bring ~ up to speed", "on the latest ~"],
+        linkings: [
+          { phrase: "bring_me", display: "bring me", phonetic: "/brɪŋmi/", desc: "「bring」末尾 /ŋ/ と「me」/m/ が連続し、/ŋm/ の連続は鼻音が続きつながりやすい。" },
+          { phrase: "up_to", display: "up to", phonetic: "/ʌptə/", desc: "「up」末尾 /p/ と「to」弱形 /tə/ が連なり /ʌptə/ と一息になる。" }
+        ]
+      },
+      {
+        en: "Let's make sure we're all on the same page.",
+        ja: "全員が同じ認識でいることを確認しましょう。",
+        chunks: ["Let's make sure ~", "on the same page"],
+        linkings: [
+          { phrase: "make_sure", display: "make sure", phonetic: "/meɪkʃʊər/", desc: "「make」末尾 /k/ と「sure」の /ʃ/ が連なり /k/ が弱化気味になる。" },
+          { phrase: "on_the", display: "on the", phonetic: "/ɒnðə/", desc: "「on」末尾 /n/ と「the」弱形 /ðə/ がつながり /ɒnðə/ と流れる。" }
+        ]
+      }
+    ],
+    "レストラン": [
+      {
+        en: "Could we have a table by the window, please?",
+        ja: "窓際のテーブルをお願いできますか。",
+        chunks: ["Could we ~", "by the window"],
+        linkings: [
+          { phrase: "have_a", display: "have a", phonetic: "/hævə/", desc: "「have」末尾 /v/ と「a」弱形 /ə/ が連結して /hævə/ となる。" },
+          { phrase: "by_the", display: "by the", phonetic: "/baɪðə/", desc: "「by」末尾 /aɪ/ と「the」弱形 /ðə/ が連なり /baɪðə/ とつながる。" }
+        ]
+      },
+      {
+        en: "I'll have the grilled salmon with a side of salad.",
+        ja: "グリルサーモンとサラダをサイドでいただきます。",
+        chunks: ["I'll have ~", "with a side of ~"],
+        linkings: [
+          { phrase: "I'll_have", display: "I'll have", phonetic: "/aɪlhæv/", desc: "「I'll」の /l/ と「have」の /h/ が連結するが、/h/ が脱落しやすく /aɪlæv/ と聞こえることも。" },
+          { phrase: "side_of", display: "side of", phonetic: "/saɪdəv/", desc: "「side」末尾 /d/ と「of」弱形 /əv/ がつながり /saɪdəv/ となる。" }
+        ]
+      },
+      {
+        en: "Does this dish come with any allergens?",
+        ja: "この料理にアレルゲンは含まれていますか。",
+        chunks: ["Does ~ come with ~", "any ~"],
+        linkings: [
+          { phrase: "dish_come", display: "dish come", phonetic: "/dɪʃkʌm/", desc: "「dish」末尾 /ʃ/ と「come」の /k/ が連なり、/ʃ/ が少し短くなる。" },
+          { phrase: "come_with", display: "come with", phonetic: "/kʌmwɪð/", desc: "「come」末尾 /m/ と「with」の /w/ が連なり /kʌmwɪð/ と一続きになる。" }
+        ]
+      }
+    ],
+    "ホテル": [
+      {
+        en: "I have a reservation under the name Tanaka.",
+        ja: "田中という名前で予約しています。",
+        chunks: ["I have a reservation", "under the name ~"],
+        linkings: [
+          { phrase: "have_a", display: "have a", phonetic: "/hævə/", desc: "「have」末尾 /v/ と「a」弱形 /ə/ が連結して /hævə/ となる。" },
+          { phrase: "under_the", display: "under the", phonetic: "/ʌndərðə/", desc: "「under」末尾 /r/ と「the」弱形 /ðə/ がつながり /ʌndərðə/ と流れる。" }
+        ]
+      },
+      {
+        en: "Could you call a taxi for me, please?",
+        ja: "タクシーを呼んでいただけますか。",
+        chunks: ["Could you ~", "call ~ for me"],
+        linkings: [
+          { phrase: "Could_you", display: "Could you", phonetic: "/kʊdʒə/", desc: "「Could」の /d/ と「you」の /j/ が融合して /dʒ/（同化）→ /kʊdʒə/。" },
+          { phrase: "for_me", display: "for me", phonetic: "/fərmi/", desc: "「for」弱形 /fər/ と「me」/mi/ がつながり /fərmi/ となる。" }
+        ]
+      },
+      {
+        en: "Is it possible to get a late checkout?",
+        ja: "レイトチェックアウトは可能ですか。",
+        chunks: ["Is it possible to ~", "late checkout"],
+        linkings: [
+          { phrase: "it_possible", display: "it possible", phonetic: "/ɪtˈpɒsɪbl/", desc: "「it」末尾 /t/ と「possible」の /p/ が連なり /t/ が弱化・脱落気味になる。" },
+          { phrase: "possible_to", display: "possible to", phonetic: "/pɒsɪbltə/", desc: "「possible」末尾 /l/ と「to」弱形 /tə/ が連なり /pɒsɪbltə/ となる。" }
+        ]
+      }
+    ],
+    "日常会話": [
+      {
+        en: "What do you usually do on your days off?",
+        ja: "休みの日は普段何をしていますか。",
+        chunks: ["What do you ~", "usually do", "days off"],
+        linkings: [
+          { phrase: "do_you", display: "do you", phonetic: "/dʒə/", desc: "「do」の /d/ と「you」の /j/ が融合して /dʒ/ になり /dʒə/ と発音される（口蓋化同化）。" },
+          { phrase: "on_your", display: "on your", phonetic: "/ɒnjər/", desc: "「on」末尾 /n/ と「your」弱形 /jər/ がつながり /ɒnjər/ となる。" }
+        ]
+      },
+      {
+        en: "I'm really into hiking these days.",
+        ja: "最近、ハイキングにはまっています。",
+        chunks: ["I'm into ~", "these days"],
+        linkings: [
+          { phrase: "really_into", display: "really into", phonetic: "/rɪəliɪntə/", desc: "「really」末尾 /i/ と「into」の /ɪ/ が連なり、母音同士がつながって /rɪəliɪntə/ となる。" },
+          { phrase: "into_hiking", display: "into hiking", phonetic: "/ɪntəhaɪkɪŋ/", desc: "「into」末尾 /tə/ と「hiking」の /h/ が連なる。/h/ は弱化しやすく /ɪntəaɪkɪŋ/ に聞こえることも。" }
+        ]
+      },
+      {
+        en: "How about we grab a bite to eat after work?",
+        ja: "仕事の後に何か食べに行きませんか。",
+        chunks: ["How about ~", "grab a bite", "after work"],
+        linkings: [
+          { phrase: "grab_a", display: "grab a", phonetic: "/ɡræbə/", desc: "「grab」末尾 /b/ と「a」弱形 /ə/ がつながり /ɡræbə/ と一息になる。" },
+          { phrase: "bite_to", display: "bite to", phonetic: "/baɪttə/", desc: "「bite」末尾 /t/ と「to」弱形 /tə/ が重なり、/t/ が一回だけ発音される。" }
+        ]
+      }
+    ],
+    "医療・病院": [
+      {
+        en: "I'd like to make an appointment with the doctor.",
+        ja: "医師の診察の予約をしたいのですが。",
+        chunks: ["I'd like to ~", "make an appointment", "with the ~"],
+        linkings: [
+          { phrase: "make_an", display: "make an", phonetic: "/meɪkən/", desc: "「make」末尾 /k/ と「an」/ən/ がつながり /meɪkən/ と一続きになる。" },
+          { phrase: "appointment_with", display: "appointment with", phonetic: "/əpɔɪntməntwɪð/", desc: "「appointment」末尾 /t/ と「with」の /w/ が連なり /t/ が軽く発音される。" }
+        ]
+      },
+      {
+        en: "I've been having a headache on and off for a week.",
+        ja: "一週間、断続的に頭痛が続いています。",
+        chunks: ["I've been ~ing", "on and off", "for a week"],
+        linkings: [
+          { phrase: "on_and", display: "on and", phonetic: "/ɒnənd/", desc: "「on」末尾 /n/ と「and」弱形 /ənd/ がつながり /ɒnənd/ となる。" },
+          { phrase: "for_a", display: "for a", phonetic: "/fərə/", desc: "「for」弱形 /fər/ と「a」弱形 /ə/ が連結して /fərə/ となる。" }
+        ]
+      },
+      {
+        en: "Could you tell me how to take these pills?",
+        ja: "この薬の飲み方を教えていただけますか。",
+        chunks: ["Could you tell me ~", "how to ~"],
+        linkings: [
+          { phrase: "tell_me", display: "tell me", phonetic: "/telmi/", desc: "「tell」末尾 /l/ と「me」/m/ が連なり、/l/から/m/へ鼻音連続で滑らかにつながる。" },
+          { phrase: "how_to", display: "how to", phonetic: "/haʊtə/", desc: "「how」末尾 /aʊ/ と「to」弱形 /tə/ がつながり /haʊtə/ と一息になる。" }
+        ]
+      }
+    ],
+    "観光": [
+      {
+        en: "Could you recommend a good place to visit nearby?",
+        ja: "近くにおすすめの観光スポットを教えていただけますか。",
+        chunks: ["Could you recommend ~", "a good place to ~", "nearby"],
+        linkings: [
+          { phrase: "place_to", display: "place to", phonetic: "/pleɪstə/", desc: "「place」末尾 /s/ と「to」弱形 /tə/ がつながり /pleɪstə/ と聞こえる。" },
+          { phrase: "visit_nearby", display: "visit nearby", phonetic: "/vɪzɪtˈnɪəbaɪ/", desc: "「visit」末尾 /t/ と「nearby」の /n/ が連なり /t/ が弱化気味になる。" }
+        ]
+      },
+      {
+        en: "How long does it take to get there by bus?",
+        ja: "バスでそこまでどのくらいかかりますか。",
+        chunks: ["How long does it take ~", "get there", "by bus"],
+        linkings: [
+          { phrase: "does_it", display: "does it", phonetic: "/dʌzɪt/", desc: "「does」末尾 /z/ と「it」/ɪt/ がつながり /dʌzɪt/ と一続きになる。" },
+          { phrase: "get_there", display: "get there", phonetic: "/ɡetðeər/", desc: "「get」末尾 /t/ と「there」の /ð/ が連なり /t/ が /ð/ に同化気味になることがある。" }
+        ]
+      },
+      {
+        en: "Is it okay to take photos inside the museum?",
+        ja: "美術館の中で写真を撮っても大丈夫ですか。",
+        chunks: ["Is it okay to ~", "take photos", "inside ~"],
+        linkings: [
+          { phrase: "it_okay", display: "it okay", phonetic: "/ɪtəʊkeɪ/", desc: "「it」末尾 /t/ が弱化してフラップ音になり「okay」/oʊkeɪ/ とつながり /ɪɾoʊkeɪ/ のように聞こえる。" },
+          { phrase: "take_photos", display: "take photos", phonetic: "/teɪkˈfoʊtəʊz/", desc: "「take」末尾 /k/ と「photos」の /f/ が連なり /k/ が軽く発音される。" }
+        ]
+      }
+    ]
+  };
+
+  const THEMES = Object.keys(DB);
+
+  // =====================================================================
+  // 状態管理
+  // =====================================================================
+  let currentSentence = null;  // { en, ja, chunks, linkings, theme }
+  let history = [];
+  let utterance = null;
+  let speaking = false;
+  let repeatMode = false;
+
+  // =====================================================================
+  // DOM 参照
+  // =====================================================================
+  const themeInput   = document.getElementById('themeInput');
+  const generateBtn  = document.getElementById('generateBtn');
+  const sentenceDisplay = document.getElementById('sentenceDisplay');
+  const jaTranslation   = document.getElementById('jaTranslation');
+  const chunkDisplay    = document.getElementById('chunkDisplay');
+  const linkingDisplay  = document.getElementById('linkingDisplay');
+  const historyDisplay  = document.getElementById('historyDisplay');
+  const playBtn         = document.getElementById('playBtn');
+  const speedSlider     = document.getElementById('speedSlider');
+  const speedVal        = document.getElementById('speedVal');
+  const statusBar       = document.getElementById('statusBar');
+  const repeatCheck     = document.getElementById('repeatCheck');
+  const modalOverlay    = document.getElementById('modalOverlay');
+  const modalClose      = document.getElementById('modalClose');
+  const modalTitle      = document.getElementById('modalTitle');
+  const modalBody       = document.getElementById('modalBody');
+
+  // =====================================================================
+  // テーマタグボタン
+  // =====================================================================
+  document.querySelectorAll('.theme-tag').forEach(btn => {
+    btn.addEventListener('click', () => {
+      themeInput.value = btn.dataset.theme;
+    });
+  });
+
+  // =====================================================================
+  // 英文生成
+  // =====================================================================
+  generateBtn.addEventListener('click', generateSentence);
+  themeInput.addEventListener('keydown', e => { if (e.key === 'Enter') generateSentence(); });
+
+  function generateSentence() {
+    const raw = themeInput.value.trim();
+    let theme = null;
+    let data = null;
+
+    if (raw) {
+      // 部分一致でテーマを探す
+      const matched = THEMES.find(t => t.includes(raw) || raw.includes(t));
+      if (matched) {
+        theme = matched;
+        data = DB[matched];
+      } else {
+        // マッチしない場合はランダム
+        theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+        data = DB[theme];
+        setStatus(`「${raw}」に近いテーマ「${theme}」から生成しました`);
+      }
+    } else {
+      theme = THEMES[Math.floor(Math.random() * THEMES.length)];
+      data = DB[theme];
+    }
+
+    // 同じテーマが連続しないよう履歴で除外（3件以上あれば）
+    let candidates = data;
+    if (history.length > 0) {
+      const lastEn = history[history.length - 1].en;
+      candidates = data.filter(d => d.en !== lastEn);
+      if (candidates.length === 0) candidates = data;
+    }
+
+    const item = candidates[Math.floor(Math.random() * candidates.length)];
+    currentSentence = { ...item, theme };
+
+    renderSentence(currentSentence);
+    renderChunks(currentSentence.chunks);
+    renderLinkings(currentSentence.linkings);
+    addHistory(currentSentence);
+    stopSpeech();
+    setStatus('');
+  }
+
+  // =====================================================================
+  // 英文レンダリング（リンキング箇所をハイライト）
+  // =====================================================================
+  function renderSentence(item) {
+    const { en, ja, linkings } = item;
+
+    // リンキングフレーズをもとにハイライト
+    let html = en;
+    linkings.forEach(lk => {
+      // フレーズをスペース区切りの単語列として扱い正規表現に変換
+      const words = lk.display.split(' ');
+      const pattern = words.map(w => escapeRegex(w)).join('[\\s\\-]+');
+      const re = new RegExp(`(${pattern})`, 'gi');
+      html = html.replace(re, (match) => {
+        return `<span class="linking" data-key="${lk.phrase}" title="タップで解説">${match}</span>`;
+      });
+    });
+
+    sentenceDisplay.innerHTML = `<span>${html}</span>`;
+    jaTranslation.textContent = `🇯🇵 ${ja}`;
+
+    // リンキングスパンにクリックイベント
+    sentenceDisplay.querySelectorAll('.linking').forEach(el => {
+      el.addEventListener('click', () => {
+        const key = el.dataset.key;
+        const lk = linkings.find(l => l.phrase === key);
+        if (lk) showModal(lk);
+      });
+    });
+  }
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  // =====================================================================
+  // チャンク表示
+  // =====================================================================
+  function renderChunks(chunks) {
+    if (!chunks || chunks.length === 0) {
+      chunkDisplay.innerHTML = '<div class="empty-state">チャンク情報なし</div>';
+      return;
+    }
+    chunkDisplay.innerHTML = `<div class="chunks-list">${
+      chunks.map(c => `<span class="chunk-badge">${c}</span>`).join('')
+    }</div>`;
+  }
+
+  // =====================================================================
+  // リンキング解説表示
+  // =====================================================================
+  function renderLinkings(linkings) {
+    if (!linkings || linkings.length === 0) {
+      linkingDisplay.innerHTML = '<div class="empty-state">リンキング情報なし</div>';
+      return;
+    }
+    linkingDisplay.innerHTML = `<div class="linking-list">${
+      linkings.map(lk => `
+        <div class="linking-item">
+          <div class="linking-phrase">🔗 ${lk.display}</div>
+          <div class="linking-phonetic">${lk.phonetic}</div>
+          <div class="linking-desc">${lk.desc}</div>
+        </div>
+      `).join('')
+    }</div>`;
+  }
+
+  // =====================================================================
+  // 履歴
+  // =====================================================================
+  function addHistory(item) {
+    // 重複を除く
+    history = history.filter(h => h.en !== item.en);
+    history.unshift(item);
+    if (history.length > 10) history = history.slice(0, 10);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyDisplay.innerHTML = '<div class="empty-state">まだ履歴がありません</div>';
+      return;
+    }
+    historyDisplay.innerHTML = `<div class="history-list">${
+      history.map((h, i) => `
+        <div class="history-item" data-idx="${i}">
+          <span class="history-en">${h.en}</span>
+          <span class="history-theme">${h.theme}</span>
+        </div>
+      `).join('')
+    }</div>`;
+    historyDisplay.querySelectorAll('.history-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.dataset.idx);
+        currentSentence = history[idx];
+        renderSentence(currentSentence);
+        renderChunks(currentSentence.chunks);
+        renderLinkings(currentSentence.linkings);
+        stopSpeech();
+        setStatus('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  // =====================================================================
+  // モーダル（リンキング詳細）
+  // =====================================================================
+  function showModal(lk) {
+    modalTitle.textContent = `🔗 ${lk.display}`;
+    modalBody.innerHTML = `
+      <p style="font-size:1.1rem;font-weight:700;color:#78350f;margin-bottom:8px;">${lk.phonetic}</p>
+      <p style="font-size:0.95rem;line-height:1.7;">${lk.desc}</p>
+    `;
+    modalOverlay.classList.add('open');
+  }
+  modalClose.addEventListener('click', () => modalOverlay.classList.remove('open'));
+  modalOverlay.addEventListener('click', e => {
+    if (e.target === modalOverlay) modalOverlay.classList.remove('open');
+  });
+
+  // =====================================================================
+  // 音声再生（Web Speech API）
+  // =====================================================================
+  playBtn.addEventListener('click', toggleSpeech);
+
+  function toggleSpeech() {
+    if (speaking) {
+      stopSpeech();
+    } else {
+      playSpeech();
+    }
+  }
+
+  function playSpeech() {
+    if (!currentSentence) {
+      setStatus('まず英文を生成してください');
+      return;
+    }
+    if (!window.speechSynthesis) {
+      setStatus('このブラウザは音声合成に対応していません');
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    utterance = new SpeechSynthesisUtterance(currentSentence.en);
+    utterance.lang = 'en-US';
+    utterance.rate = parseFloat(speedSlider.value);
+
+    // 英語音声を優先的に選択
+    const voices = window.speechSynthesis.getVoices();
+    const enVoice = voices.find(v => v.lang.startsWith('en') && v.localService) ||
+                   voices.find(v => v.lang.startsWith('en'));
+    if (enVoice) utterance.voice = enVoice;
+
+    utterance.onstart = () => {
+      speaking = true;
+      playBtn.textContent = '⏹';
+      setStatus('<span class="loading"></span> 再生中...');
+    };
+    utterance.onend = () => {
+      speaking = false;
+      playBtn.textContent = '▶';
+      setStatus('再生完了');
+      if (repeatCheck.checked) {
+        setTimeout(() => playSpeech(), 800);
+      }
+    };
+    utterance.onerror = (e) => {
+      speaking = false;
+      playBtn.textContent = '▶';
+      setStatus('音声再生エラー: ' + e.error);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  function stopSpeech() {
+    if (window.speechSynthesis) window.speechSynthesis.cancel();
+    speaking = false;
+    playBtn.textContent = '▶';
+    setStatus('');
+  }
+
+  // スピードスライダー
+  speedSlider.addEventListener('input', () => {
+    speedVal.textContent = parseFloat(speedSlider.value).toFixed(1) + '×';
+    if (speaking) {
+      stopSpeech();
+      setTimeout(playSpeech, 100);
+    }
+  });
+
+  // リピートチェック
+  repeatCheck.addEventListener('change', () => {
+    repeatMode = repeatCheck.checked;
+  });
+
+  // =====================================================================
+  // ユーティリティ
+  // =====================================================================
+  function setStatus(msg) {
+    statusBar.innerHTML = msg;
+  }
+
+  // 音声リスト読み込み待ち
+  if (window.speechSynthesis) {
+    window.speechSynthesis.onvoiceschanged = () => {};
+  }
+  </script>
+</body>
+</html>
