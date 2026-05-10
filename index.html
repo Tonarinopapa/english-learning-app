@@ -408,6 +408,60 @@
       display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--muted);
     }
     .conv-repeat-group input[type=checkbox] { width: 16px; height: 16px; cursor: pointer; }
+    /* 進捗バー */
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 8px;
+      cursor: pointer;
+      position: relative;
+    }
+    .progress-bar:hover { opacity: 0.85; }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.15s linear;
+      pointer-events: none;
+    }
+    .conv-progress-fill { background: #059669; }
+    /* ピッチコントロール */
+    .pitch-controls {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: var(--surface, #f8f8fc);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+    }
+    .pitch-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+      min-width: 140px;
+    }
+    .pitch-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .pitch-label .speaker-tag {
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 0.75rem;
+    }
+    .pitch-label .speaker-tag.a { background: #4f46e5; }
+    .pitch-label .speaker-tag.b { background: #7c3aed; }
   </style>
 </head>
 <body>
@@ -461,10 +515,9 @@
         <label for="repeatCheck">リピート再生</label>
       </div>
     </div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="status-bar" id="statusBar"></div>
   </div>
-
-  <!-- チャンク解説 -->
   <div class="card" id="chunkCard">
     <div class="section-title">使われているチャンク</div>
     <div id="chunkDisplay">
@@ -509,10 +562,25 @@
         <label for="convRepeatCheck">リピート再生</label>
       </div>
     </div>
+    <div class="progress-bar"><div class="progress-fill conv-progress-fill" id="convProgressFill"></div></div>
+    <div class="pitch-controls">
+      <div class="pitch-group">
+        <div class="pitch-label">
+          <span><span class="speaker-tag a">A</span> ピッチ</span>
+          <span id="convPitchAVal">1.4</span>
+        </div>
+        <input class="speed-slider" id="convPitchA" type="range" min="0.5" max="2.0" step="0.1" value="1.4" />
+      </div>
+      <div class="pitch-group">
+        <div class="pitch-label">
+          <span><span class="speaker-tag b">B</span> ピッチ</span>
+          <span id="convPitchBVal">0.7</span>
+        </div>
+        <input class="speed-slider" id="convPitchB" type="range" min="0.5" max="2.0" step="0.1" value="0.7" />
+      </div>
+    </div>
     <div class="conv-status" id="convStatus"></div>
   </div>
-
-  <!-- リンキング詳細モーダル -->
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
       <button class="modal-close" id="modalClose">✕</button>
@@ -2745,6 +2813,7 @@
   let utterance = null;
   let speaking = false;
   let repeatMode = false;
+  let seekCharIndex = 0;
 
   // =====================================================================
   // DOM 参照
@@ -2956,7 +3025,7 @@
     }
   }
 
-  function playSpeech() {
+  function playSpeech(fromCharIndex) {
     if (!currentSentence) {
       setStatus('まず英文を生成してください');
       return;
@@ -2966,8 +3035,13 @@
       return;
     }
 
+    seekCharIndex = (fromCharIndex > 0) ? fromCharIndex : 0;
+    const speakText = seekCharIndex > 0
+      ? currentSentence.en.slice(seekCharIndex)
+      : currentSentence.en;
+
     window.speechSynthesis.cancel();
-    utterance = new SpeechSynthesisUtterance(currentSentence.en);
+    utterance = new SpeechSynthesisUtterance(speakText);
     utterance.lang = 'en-US';
     utterance.rate = parseFloat(speedSlider.value);
 
@@ -2977,15 +3051,28 @@
                    voices.find(v => v.lang.startsWith('en'));
     if (enVoice) utterance.voice = enVoice;
 
+    const progressFill = document.getElementById('progressFill');
+    const textLen = currentSentence.en.length;
     utterance.onstart = () => {
       speaking = true;
       playBtn.textContent = '⏹';
       setStatus('<span class="loading"></span> 再生中...');
+      progressFill.style.width = seekCharIndex > 0
+        ? Math.round(seekCharIndex / textLen * 100) + '%'
+        : '0%';
+    };
+    utterance.onboundary = (e) => {
+      if (textLen > 0) {
+        const charPos = seekCharIndex + e.charIndex;
+        progressFill.style.width = Math.min(100, Math.round(charPos / textLen * 100)) + '%';
+      }
     };
     utterance.onend = () => {
       speaking = false;
       playBtn.textContent = '▶';
       setStatus('再生完了');
+      progressFill.style.width = '100%';
+      setTimeout(() => { progressFill.style.width = '0%'; }, 600);
       if (repeatCheck.checked) {
         setTimeout(() => playSpeech(), 800);
       }
@@ -2994,6 +3081,7 @@
       speaking = false;
       playBtn.textContent = '▶';
       setStatus('音声再生エラー: ' + e.error);
+      progressFill.style.width = '0%';
     };
 
     window.speechSynthesis.speak(utterance);
@@ -3002,9 +3090,38 @@
   function stopSpeech() {
     if (window.speechSynthesis) window.speechSynthesis.cancel();
     speaking = false;
+    seekCharIndex = 0;
     playBtn.textContent = '▶';
     setStatus('');
   }
+
+  // 進捗バー シーク
+  document.getElementById('progressFill').parentElement.addEventListener('click', (e) => {
+    if (!currentSentence) return;
+    const bar = e.currentTarget;
+    const pct = e.offsetX / bar.clientWidth;
+    const charIndex = Math.round(pct * currentSentence.en.length);
+    speaking = false;
+    playSpeech(charIndex);
+  });
+
+  // 会話練習 進捗バー シーク
+  document.getElementById('convProgressFill').parentElement.addEventListener('click', (e) => {
+    if (!currentConv || !convPlaying) {
+      // 再生中でなければ先頭から再生開始
+      if (!currentConv) return;
+    }
+    const bar = e.currentTarget;
+    const pct = e.offsetX / bar.clientWidth;
+    const lineIndex = Math.min(
+      currentConv.lines.length - 1,
+      Math.floor(pct * currentConv.lines.length)
+    );
+    window.speechSynthesis.cancel();
+    convPlaying = true;
+    convPlayBtn.textContent = '⏸';
+    playConvFrom(lineIndex);
+  });
 
   // スピードスライダー
   speedSlider.addEventListener('input', () => {
@@ -3801,6 +3918,10 @@
   const convPlayBtn    = document.getElementById('convPlayBtn');
   const convSpeedSlider = document.getElementById('convSpeedSlider');
   const convSpeedVal   = document.getElementById('convSpeedVal');
+  const convPitchA     = document.getElementById('convPitchA');
+  const convPitchB     = document.getElementById('convPitchB');
+  const convPitchAVal  = document.getElementById('convPitchAVal');
+  const convPitchBVal  = document.getElementById('convPitchBVal');
   const convStatus     = document.getElementById('convStatus');
   const convLines      = document.getElementById('convLines');
   const convRepeatCheck = document.getElementById('convRepeatCheck');
@@ -3867,19 +3988,29 @@
 
   function playConvFrom(index) {
     if (!currentConv) return;
-    if (index >= currentConv.lines.length) {
+    const convProgressFill = document.getElementById('convProgressFill');
+    const total = currentConv.lines.length;
+    if (index >= total) {
       document.querySelectorAll('.conv-line').forEach(el => el.classList.remove('playing'));
       if (convRepeat) {
         convLineIndex = 0;
+        if (convProgressFill) convProgressFill.style.width = '0%';
         setTimeout(() => playConvFrom(0), 600);
       } else {
         convPlaying = false;
         convPlayBtn.textContent = '▶';
         convStatus.textContent = '再生完了';
+        if (convProgressFill) {
+          convProgressFill.style.width = '100%';
+          setTimeout(() => { convProgressFill.style.width = '0%'; }, 800);
+        }
       }
       return;
     }
     convLineIndex = index;
+    if (convProgressFill) {
+      convProgressFill.style.width = Math.round((index / total) * 100) + '%';
+    }
     highlightConvLine(index);
     const line = currentConv.lines[index];
     convStatus.textContent = line.speaker + ': ' + line.en;
@@ -3889,10 +4020,10 @@
 
     // スピーカーA: 高音（女性っぽく）、B: 低音（男性っぽく）
     if (line.speaker === 'A') {
-      utt.pitch = 1.4;
+      utt.pitch = parseFloat(convPitchA.value);
       if (convVoiceFemale) utt.voice = convVoiceFemale;
     } else {
-      utt.pitch = 0.7;
+      utt.pitch = parseFloat(convPitchB.value);
       if (convVoiceMale) utt.voice = convVoiceMale;
     }
 
@@ -3930,6 +4061,13 @@
 
   convSpeedSlider.addEventListener('input', () => {
     convSpeedVal.textContent = parseFloat(convSpeedSlider.value).toFixed(1) + '×';
+  });
+
+  convPitchA.addEventListener('input', () => {
+    convPitchAVal.textContent = parseFloat(convPitchA.value).toFixed(1);
+  });
+  convPitchB.addEventListener('input', () => {
+    convPitchBVal.textContent = parseFloat(convPitchB.value).toFixed(1);
   });
 
   convRepeatCheck.addEventListener('change', () => {
